@@ -1,0 +1,13 @@
+{
+    "name": "intro_to_ipn",
+    "version": "0.0.0",
+    "description": "npm introduction",
+    "main": "app.js",
+    "author": "Vlad V",
+    "license": "BSD",
+    "dependencies": {
+        "consolidate": "~0.9.1",
+        "express": "~3.2.6",
+        "mongodb": "~1.3.19"
+    }
+}
