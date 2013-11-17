@@ -1,0 +1,284 @@
+> for(i = 0; i<3; i++) print("hello, MongoDB developer!");
+hello, MongoDB developer!
+hello, MongoDB developer!
+hello, MongoDB developer!
+
+
+> help keys
+
+> help
+
+> z = {a:1};
+{ "a" : 1 }
+> z.a
+1
+> z["a"]
+1
+> w="a"
+a
+> z[w]
+1
+
+
+> NumberInt(1)
+NumberInt(1)
+> NumberLong(1)
+NumberLong(1)
+> new Date()
+ISODate("2013-11-09T02:27:33.914Z")
+
+> doc = { "name": "Smith", "age": 30};
+{ "name" : "Smith", "age" : 30 }
+> db.people.insert(doc);
+> db.people.find();
+{ "_id" : ObjectId("527d9e1752cd8eaca456ed08"), "name" : "Smith", "age" : 30 }
+
+"_id" is a primary key, immutable field
+
+> db.people.findOne()
+{
+    "_id" : ObjectId("527d9e1752cd8eaca456ed08"),
+    "name" : "Smith",
+    "age" : 30
+}
+
+Criteria
+> db.people.findOne({"name":"Smith"})
+{
+    "_id" : ObjectId("527d9e1752cd8eaca456ed08"),
+    "name" : "Smith",
+    "age" : 30
+}
+
+Select fields to display
+> db.people.findOne({"name":"Smith"}, {"name":true, "_id": false})
+{ "name" : "Smith" }
+
+> db.people.find()
+{ "_id" : ObjectId("527d9e1752cd8eaca456ed08"), "name" : "Smith", "age" : 30 }
+{ "_id" : ObjectId("527da02252cd8eaca456ed09"), "name" : "Jones", "age" : 18 }
+
+generate data
+> for (i=0; i<1000; i++){ names=["exam", "essay", "quiz"]; for(j=0;j<3;j++){ db.scores.insert({ "student" : i, "type" : names[j], score: Math.round(Math.random()*100)} )}}
+
+AND criteria - query by example
+> db.scores.find({ student: 19, type: "essay"})
+{ "_id" : ObjectId("527da17652cd8eaca456ed44"), "student" : 19, "type" : "essay", "score" : 84 }
+
+score > 95
+$gt, $lt, $gte, $lte
+> db.scores.find({ score: { $gt : 95}})
+
+db.scores.find({ score: { $gt : 30, $lt: 32}})
+{ "_id" : ObjectId("527da17652cd8eaca456ed51"), "student" : 23, "type" : "quiz", "score" : 31 }
+
+Lexicographically
+> db.people.find({ name: { $gt: "Jones"}})
+{ "_id" : ObjectId("527d9e1752cd8eaca456ed08"), "name" : "Smith", "age" : 30 }
+
+Field exists
+> db.people.find({ profession: { $exists: true }})
+{ "_id" : ObjectId("527db30f52cd8eaca456f8c2"), "name" : "Jones 2", "age" : 18, "profession" : "programmer" }
+
+Field with type strng - BSON type id
+> db.people.find({ name: { $type: 2 }})
+{ "_id" : ObjectId("527d9e1752cd8eaca456ed08"), "name" : "Smith", "age" : 30 }
+
+Regular expressions
+> db.people.find({ name: { $regex: "^J" }})
+{ "_id" : ObjectId("527da02252cd8eaca456ed09"), "name" : "Jones", "age" : 18 }
+{ "_id" : ObjectId("527db30f52cd8eaca456f8c2"), "name" : "Jones 2", "age" : 18, "profession" : "programmer" }
+
+$or - prefix operator - union of queries
+> db.people.find({ $or: [{ name: { $regex: "^J" }}, {age: { $exists : true}}] })
+{ "_id" : ObjectId("527d9e1752cd8eaca456ed08"), "name" : "Smith", "age" : 30 }
+{ "_id" : ObjectId("527da02252cd8eaca456ed09"), "name" : "Jones", "age" : 18 }
+{ "_id" : ObjectId("527db30f52cd8eaca456f8c2"), "name" : "Jones 2", "age" : 18, "profession" : "programmer" }
+{ "_id" : ObjectId("527db3a952cd8eaca456f8c3"), "name" : 2, "age" : 18, "profession" : "programmer" }
+
+$and - prefix operator
+> db.people.find({ $and: [{ name: { $regex: "^J" }}, {profession: { $exists : true}}] })
+{ "_id" : ObjectId("527db30f52cd8eaca456f8c2"), "name" : "Jones 2", "age" : 18, "profession" : "programmer" }
+
+Does not work as intended - only second $lt triggers
+> db.people.find({age: {$gt: 18}, age: {$lt: 31}})
+{ "_id" : ObjectId("527d9e1752cd8eaca456ed08"), "name" : "Smith", "age" : 30 }
+{ "_id" : ObjectId("527da02252cd8eaca456ed09"), "name" : "Jones", "age" : 18 }
+{ "_id" : ObjectId("527db30f52cd8eaca456f8c2"), "name" : "Jones 2", "age" : 18, "profession" : "programmer" }
+{ "_id" : ObjectId("527db3a952cd8eaca456f8c3"), "name" : 2, "age" : 18, "profession" : "programmer" }
+
+Create documents with Arrays
+> db.accounts.insert({name: "Howard", favorites: ["ice cream", "jello"]})
+> db.accounts.insert({name: "George", favorites: ["apple pie", "carrot cake"]})
+
+Mongo is polymorphic - it will look inside array, no recursion to n depth - top level only
+> db.accounts.find( {favorites: "ice cream" });
+{ "_id" : ObjectId("527e40d552cd8eaca456f8c4"), "name" : "Howard", "favorites" : [  "ice cream",  "jello" ] }
+
+$all - contains all values in array - order does not matter
+> db.accounts.find({favorites: {$all: ["carrot cake", "apple pie"]} })
+{ "_id" : ObjectId("527e40fd52cd8eaca456f8c5"), "name" : "George", "favorites" : [  "apple pie",  "carrot cake" ] }
+{ "_id" : ObjectId("527e432252cd8eaca456f8c6"), "name" : "George", "favorites" : [  "apple pie",  "carrot cake" ] }
+
+$in - array contains a OR b
+> db.accounts.find({favorites: {$in: ["jello", "apple pie"]} })
+{ "_id" : ObjectId("527e40d552cd8eaca456f8c4"), "name" : "Howard", "favorites" : [  "ice cream",  "jello" ] }
+{ "_id" : ObjectId("527e40fd52cd8eaca456f8c5"), "name" : "George", "favorites" : [  "apple pie",  "carrot cake" ] }
+{ "_id" : ObjectId("527e432252cd8eaca456f8c6"), "name" : "George", "favorites" : [  "apple pie",  "carrot cake" ] }
+
+inserting nested document
+db.people.insert({ name: "Vlad", email: {work: "work@example.com", home: "home@example.com"}});
+
+Find nested documents
+> db.people.find({ "email.work": "work@example.com"})
+{ "_id" : ObjectId("527e506652cd8eaca456f8c7"), "name" : "Vlad", "email" : { "work" : "work@example.com", "home" : "home@example.com" } }
+
+Cursor
+> curr = db.people.find(); null;
+null
+> curr.hasNext()
+true
+> curr.next()
+{
+    "_id" : ObjectId("527d9e1752cd8eaca456ed08"),
+    "name" : "Smith",
+    "age" : 30
+}
+
+> curr = db.people.find(); null;
+null
+> curr.limit(5); null;
+null
+> while(curr.hasNext()) printjson(curr.next())
+
+Order: sort, skip, order. Once query is executed filters cannot be applied
+> curr = db.people.find(); null;
+null
+> curr.sort({name: -1}).limit(2).skip(2); null;
+null
+> while(curr.hasNext()) printjson(curr.next())
+{
+    "_id" : ObjectId("527db30f52cd8eaca456f8c2"),
+    "name" : "Jones 2",
+    "age" : 18,
+    "profession" : "programmer"
+}
+{
+    "_id" : ObjectId("527da02252cd8eaca456ed09"),
+    "name" : "Jones",
+    "age" : 18
+}
+
+Count results
+> db.scores.count({type: "essay"})
+1000
+
+Update record - replaces data completely - replace doc with name "Smith" with { name : "Jackson", salary : 1000000 }
+> db.people.update( { name : "Smith" } , { name : "Jackson", salary : 1000000 })
+
+Update age field
+> db.people.update( { name : "Vlad" }, { $set : { age : 18 }})
+
+Increment age by 3
+> db.people.update( { name : "Vlad" }, { $inc : { age : 3 }})
+
+
+Remove field
+db.people.update( { name : "Jones 2" }, { $unset : { profession : 1 }})
+
+> db.arrays.insert({ _id : 0 , a : [1, 2, 3, 4]})
+> db.arrays.findOne()
+{ "_id" : 0, "a" : [ 1, 2, 3, 4 ] }
+
+Update array element
+> db.arrays.update( { _id : 0 }, { $set : { "a.2" : 5 }})
+> db.arrays.find()
+{ "_id" : 0, "a" : [  1,  2,  5,  4 ] }
+
+Push array element
+> db.arrays.update( { _id : 0 }, { $push : { a : 13 }})
+> db.arrays.find()
+{ "_id" : 0, "a" : [  1,  2,  5,  4,  13 ] }
+
+Pop array element
+> db.arrays.update( { _id : 0 }, { $pop : { a : 1 }})
+> db.arrays.find()
+{ "_id" : 0, "a" : [  1,  2,  5,  4 ] }
+
+Remove first element
+> db.arrays.update( { _id : 0 }, { $pop : { a : -1 }})
+
+Push array of elements
+> db.arrays.update( { _id : 0 }, { $pushAll : { a : [1,2,3,4,5] }})
+
+Pull element - remove element no matter of its location
+> db.arrays.update( { _id : 0 }, { $pull : { a : 5 }})
+
+Pull array of elements
+> db.arrays.update( { _id : 0 }, { $pullAll : { a : [1,2] }})
+
+Add to set - adding element of does not exist
+> db.arrays.update( { _id : 0 }, { $addToSet : { a : 3 }})
+
+Add record it it does not extist
+db.people.update({name: "George"}, {$set: { age: 21}}, {upsert: true})
+
+Update all records - by default mongo updatdes only 1 doc. No reader will see document half updated
+db.people.update({}, {$set: { title: "Dr."}}, { multi : true })
+
+Removing docs
+> db.people.remove({ name : "Alice" })
+
+Drop collection
+> db.people.drop();
+
+Interactive shell tells u if op failed
+> db.runCommand( { getLastError : 1 })
+{
+    "err" : "E11000 duplicate key error index: test.people.$_id_  dup key: { : ObjectId('527d9e1752cd8eaca456ed08') }",
+    "code" : 11000,
+    "n" : 0,
+    "connectionId" : 1,
+    "ok" : 1
+}
+
+Vlads-Mac-mini:lesson2_examples vlad$ mongoimport -d course -c grades grades.json
+connected to: 127.0.0.1
+Sat Nov  9 12:22:01.474 check 9 16
+Sat Nov  9 12:22:01.474 imported 16 objects
+
+Importing reddit data
+wget http://www.reddit.com/r/technology/.json -O reddit_tech.json
+
+
+Import csv
+mongoimport --type csv --headerline weather_data.csv -d weather -c data
+
+db.data.find({"Wind Direction": {$gte: 180, $lte: 360}}).sort({ 'Temperature': 1 }).limit(1)
+
+Blog application: user login, add posts, comments, filter by tag
+app.js
+routes/
+views/
+Code for interacting with mongodb:
+users.js
+posts.js
+sessions.js
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

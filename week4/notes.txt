@@ -1,0 +1,60 @@
+Index building
+foreground: fast, blocks writes (per DB lock)
+background: slow, does not block 
+
+db.foo.find({c:1}).explain()
+cursor: BasicCursor - no indes used, BtreeCursor - index used
+indexOnly - does not go to collection
+
+hint({a:1, b:1, c:1}) - tell db what index to use
+hint({ $natural : 1 }) - ignore index
+hinting wrong sparce index may give wrong result
+
+cursor.explain(function(err, explain_output)) - Explain in node.js
+
+ensureIndex({ 'location' : '2d', type : 1 })
+find({ location : {$near : [x,y]} });
+db.runCommand({ geoNear: 'stores', near : [50, 50], spherical : true, maxDistance : 1 })
+
+If the key is missing -> it maps to null
+sparce: true - will allow indexes on null, but it would not list docs when sorting
+
+{key:1}, {unique: true} - ensures no duplicated 
+dropDups: true - removes duplicates -> -> Danger ahead
+
+db.people.ensureIndex({ 'address.tag' : 1 }) - index on sub arrays, index point for every item in array
+multikey index - both cannot be arrays
+
+
+
+Table/collection scan is a death to performance
+Indexes = ordered list of keys, take space on disk, take time to update
+
+Mongo logs slow queries [mongod console]
+db.system.profile.find().pretty()
+0 - no queries, 1 - slow queries, 2 - all queries
+Log queries > 2 mili seconds
+mongod --dbpath /usr/local/var/mongodb --profile 1 --slowms 2
+db.getProfilingLevel()
+db.setProfilingLevel(1,4)
+db.getProfilingStatus()
+db.students.stats() - storage size in bytes
+db.students.totalIndexSize()
+
+Find all indexes
+db.system.indexes.find()
+
+Find indexes for a collection
+db.students.getIndexes()
+
+Delete index
+db.students.dropIndex({ 'student_id' : 1 })
+
+Create index
+db.students.ensureIndex({ student_id : 1 })
+
+mongotop 3 - refresh every 3 sec
+mongostat
+
+
+
